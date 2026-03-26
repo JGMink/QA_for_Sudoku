@@ -776,9 +776,13 @@ def main() -> None:
                         help="Annealing mode: forward (default) or reverse")
     parser.add_argument("--include-9x9", action="store_true",
                         help="Also embed/solve 9x9 puzzles (large — may fail embedding)")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Run only the first N tasks (for smoke-testing before full run)")
     args = parser.parse_args()
 
     tasks = build_tasks(mode=args.mode, include_9x9=args.include_9x9)
+    if args.limit is not None:
+        tasks = tasks[:args.limit]
     print(f"{len(tasks)} tasks  |  phase: {args.phase}  |  mode: {args.mode}")
     for _, diff, puzzle, tid, n_free, mode in tasks:
         n_given = int(np.sum(puzzle != 0))
