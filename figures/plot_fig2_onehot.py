@@ -55,10 +55,10 @@ ax_p.set_aspect("equal")
 ax_p.axis("off")
 ax_p.set_title("4×4 Puzzle", fontsize=12, fontweight="bold", pad=10)
 
-# Matrix axes (right) — wider than tall cells, with extra x room for labels
-ax_m = fig.add_axes([0.37, 0.10, 0.55, 0.80])
-# xlim: cols 0-3 plus space for row labels
-ax_m.set_xlim(-0.5, N + 2.8)
+# Matrix axes (right)
+ax_m = fig.add_axes([0.37, 0.10, 0.46, 0.80])
+# xlim: cols 0-3 plus just enough for row labels
+ax_m.set_xlim(-0.5, N + 1.2)
 ax_m.set_ylim(-0.5, N * N - 0.5)
 ax_m.axis("off")
 ax_m.set_title(
@@ -135,20 +135,34 @@ for row_idx in range(N * N):
               f"({cell_r+1},{cell_c+1})",
               ha="left", va="center", fontsize=8.5, color="#444444")
 
-    # Annotation text for highlighted rows
-    if row_idx in ANNOTATE_ROWS:
-        label, _, txt_col = ANNOTATE_ROWS[row_idx]
-        ax_m.text(N - 0.5 + 1.35, mat_y,
-                  label, ha="left", va="center",
-                  fontsize=8.5, color=txt_col, fontweight="bold",
-                  bbox=dict(boxstyle="round,pad=0.25",
-                            facecolor="white", edgecolor=txt_col,
-                            alpha=0.9, linewidth=1.0))
 
 # Column labels (bottom)
 for k in range(N):
     ax_m.text(k, -0.5 - 0.5, f"d={k+1}",
               ha="center", va="top", fontsize=10, fontweight="bold")
+
+# Annotation notes below title (top of matrix area)
+ax_m.annotate(
+    "▲ (1,1) free cell — all 4 vars active",
+    xy=(1.5, N * N - 1),             # point at top of col 1-2, top row
+    xytext=(0.5, N * N + 0.55),
+    fontsize=8.5, color="#1A5276",
+    ha="center", va="bottom",
+    arrowprops=dict(arrowstyle="-", color="#1A5276", lw=1.0, alpha=0.6),
+    bbox=dict(boxstyle="round,pad=0.25", facecolor="#EBF5FB",
+              edgecolor="#1A5276", alpha=0.9, linewidth=0.8),
+)
+ax_m.annotate(
+    "▲ (1,2) given=2 — one locked, 3 killed",
+    xy=(1.5, N * N - 2),
+    xytext=(1.5, N * N + 1.25),
+    fontsize=8.5, color="#7D6608",
+    ha="center", va="bottom",
+    arrowprops=dict(arrowstyle="-", color="#7D6608", lw=1.0, alpha=0.6),
+    bbox=dict(boxstyle="round,pad=0.25", facecolor="#FEF9E7",
+              edgecolor="#7D6608", alpha=0.9, linewidth=0.8),
+)
+ax_m.set_ylim(-0.5, N * N + 2.0)   # make room above for the callouts
 
 # ---------------------------------------------------------------------------
 # Connecting lines (puzzle cell → matrix row)
