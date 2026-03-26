@@ -57,8 +57,8 @@ ax_m = fig.add_axes([0.37, 0.10, 0.46, 0.80])
 ax_m.set_xlim(-0.5, N + 1.2)
 ax_m.set_ylim(-0.5, N * N - 0.5)
 ax_m.axis("off")
-ax_m.set_title("16×4 Encoding Matrix  (64 binary variables)",
-               fontsize=11, fontweight="bold", pad=10)
+fig.text(0.5, 0.91, "16×4 Encoding Matrix  (64 binary variables)",
+         ha="center", fontsize=11, fontweight="bold")
 
 # ---------------------------------------------------------------------------
 # Draw puzzle grid
