@@ -11,7 +11,8 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import ConnectionPatch
 from pathlib import Path
 
-OUT = Path(__file__).parent / "fig2_onehot_matrix.png"
+OUT_PNG = Path(__file__).parent / "fig2_onehot_matrix.png"
+OUT_PDF = Path(__file__).parent / "fig2_onehot_matrix.pdf"
 
 # hard_1 puzzle (0 = blank)
 PUZZLE = np.array([
@@ -151,6 +152,8 @@ fig.legend(
     fontsize=9, ncol=3, framealpha=0.9,
 )
 
-plt.savefig(OUT, dpi=150, bbox_inches="tight", facecolor="white")
+plt.savefig(OUT_PNG, dpi=300, bbox_inches="tight", facecolor="white")
+plt.savefig(OUT_PDF, bbox_inches="tight", facecolor="white")
 plt.close()
-print(f"Saved {OUT}")
+print(f"Saved {OUT_PNG}")
+print(f"Saved {OUT_PDF}")

@@ -17,6 +17,7 @@ from pathlib import Path
 from PIL import Image
 
 OUT = Path(__file__).parent / "fig3_compression.png"
+OUT_PDF = Path(__file__).parent / "fig3_compression.pdf"
 
 # 9×9 easy puzzle (30 givens)
 PUZZLE = np.array([
@@ -147,8 +148,10 @@ fig.suptitle(
     fontsize=20, fontweight="bold", x=0.5, y=0.94,
 )
 
-plt.savefig(OUT, dpi=150, bbox_inches="tight", facecolor="white")
+plt.savefig(OUT, dpi=300, bbox_inches="tight", facecolor="white")
+plt.savefig(OUT_PDF, bbox_inches="tight", facecolor="white")
 plt.close()
+print(f"Saved {OUT_PDF}")
 
 # Auto-crop internal 3D-axes whitespace down to actual content
 img  = Image.open(OUT).convert("RGB")

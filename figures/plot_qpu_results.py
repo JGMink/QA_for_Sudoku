@@ -123,10 +123,13 @@ ax.set_title(
     fontsize=12, fontweight="bold", pad=14,
 )
 
-out5 = HERE / "fig5_comparison_table.png"
-plt.savefig(out5, dpi=150, bbox_inches="tight", facecolor="white")
+out5     = HERE / "fig5_comparison_table.png"
+out5_pdf = HERE / "fig5_comparison_table.pdf"
+plt.savefig(out5,     dpi=300, bbox_inches="tight", facecolor="white")
+plt.savefig(out5_pdf, bbox_inches="tight", facecolor="white")
 plt.close()
 print(f"Saved {out5}")
+print(f"Saved {out5_pdf}")
 
 # ---------------------------------------------------------------------------
 # Fig 6 — bar chart: QPU valid rate by difficulty, SA baseline
