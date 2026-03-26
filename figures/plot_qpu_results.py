@@ -183,7 +183,8 @@ ax.tick_params(axis="both", labelsize=11)
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 
-ax.legend(fontsize=11, framealpha=0.9, loc="lower left")
+ax.legend(fontsize=11, framealpha=0.9,
+          loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2)
 
 ax.set_title(
     "QPU Valid Solution Rate vs. Puzzle Difficulty\n"
