@@ -228,3 +228,11 @@ ipython_config.py
 # Jupyter lab virtual documents
 # https://jupyterlab-lsp.readthedocs.io/en/2.x/Configuring.html#virtual_documents_dir
 .virtual_documents/
+
+# QPU experiment outputs (large generated files)
+qpu_experiments/embeddings_sudoku/
+qpu_experiments/results_sudoku_forward/
+qpu_experiments/results_sudoku_reverse/
+qpu_experiments/lam_tuning/
+qpu_experiments/logs/
+qpu_experiments/__pycache__/

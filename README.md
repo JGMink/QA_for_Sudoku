@@ -715,3 +715,52 @@ This project is licensed under the MIT License
 ---
 
 **Status:** Active Development | **Version:** 1.0.0 | **Last Updated:** 2025
+
+---
+
+## QPU Experiments
+
+Hardware experiments on D-Wave Advantage2 (Zephyr topology, ~7,000 qubits) benchmarking the Sudoku QUBO across difficulty levels and annealing modes. See `qpu_experiments_proposal.md` for the full proposal.
+
+### Scripts (`qpu_experiments/`)
+
+| Script | Purpose |
+|--------|---------|
+| `compute_gs_sudoku.py` | Backtracking solver that finds ground-truth solutions for all 14 puzzles and saves them to `ground_truths_sudoku.json` |
+| `tune_lam_sudoku.py` | SA-based sweep over LAM ∈ {0.5…4.0} × 12 puzzles to find optimal QUBO penalty weight before QPU runs |
+| `run_qpu_sudoku.py` | Forward and reverse annealing on D-Wave QPU; three phases: embed, solve, analyze |
+
+### Three-Run Workflow
+
+**Run 1 — LAM Tuning (local, free)**
+```bash
+python qpu_experiments/tune_lam_sudoku.py
+```
+Sweeps LAM values across all 12 puzzles using SA (108 runs, ~5 min). Output: `qpu_experiments/lam_tuning/lam_sweep.csv` + `lam_summary.json`.
+
+**Run 2 — Forward Annealing (QPU)**
+```bash
+python qpu_experiments/run_qpu_sudoku.py --mode forward --phase embed
+python qpu_experiments/run_qpu_sudoku.py --mode forward --phase solve
+python qpu_experiments/run_qpu_sudoku.py --phase analyze
+```
+12 tasks × 1,000 reads × 200 µs ≈ 2.4 s QPU time.
+
+**Run 3 — Reverse Annealing (QPU)**
+```bash
+python qpu_experiments/run_qpu_sudoku.py --mode reverse --phase embed
+python qpu_experiments/run_qpu_sudoku.py --mode reverse --phase solve
+python qpu_experiments/run_qpu_sudoku.py --phase analyze
+```
+SA finds a valid initial state per puzzle; QPU reverse-anneals from that state. 12 tasks × 1,000 reads × 120 µs ≈ 1.4 s QPU time.
+
+### Metrics
+
+- **Valid rate** — % reads decoding to a valid Sudoku solution
+- **GS rate** — % reads matching the known unique solution
+- **Chain break fraction** — mean fraction of chains broken per read
+- **SA baseline** — SA valid rate at same read count (free comparison)
+
+### Reference Materials (`qpu_reference/`)
+
+D-Wave integration reference code, HPC/SLURM guides for Sycamore cluster, and QPU configuration files carried over from related protein-folding QPU work.
