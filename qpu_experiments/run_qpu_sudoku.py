@@ -776,11 +776,16 @@ def main() -> None:
                         help="Annealing mode: forward (default) or reverse")
     parser.add_argument("--include-9x9", action="store_true",
                         help="Also embed/solve 9x9 puzzles (large — may fail embedding)")
+    parser.add_argument("--only-9x9", action="store_true",
+                        help="Run only 9x9 puzzles (implies --include-9x9, skips 4x4)")
     parser.add_argument("--limit", type=int, default=None,
                         help="Run only the first N tasks (for smoke-testing before full run)")
     args = parser.parse_args()
 
-    tasks = build_tasks(mode=args.mode, include_9x9=args.include_9x9)
+    include_9x9 = args.include_9x9 or args.only_9x9
+    tasks = build_tasks(mode=args.mode, include_9x9=include_9x9)
+    if args.only_9x9:
+        tasks = [t for t in tasks if t[0] == "9x9"]
     if args.limit is not None:
         tasks = tasks[:args.limit]
     print(f"{len(tasks)} tasks  |  phase: {args.phase}  |  mode: {args.mode}")
@@ -800,8 +805,8 @@ def main() -> None:
     if "solve"   in phases: phase_solve(tasks, sampler, mode=args.mode)
     if "analyze" in phases:
         # Analyze both modes if both exist
-        tasks_fwd = build_tasks(mode="forward", include_9x9=args.include_9x9)
-        tasks_rev = build_tasks(mode="reverse", include_9x9=args.include_9x9)
+        tasks_fwd = build_tasks(mode="forward", include_9x9=include_9x9)
+        tasks_rev = build_tasks(mode="reverse", include_9x9=include_9x9)
         phase_analyze(tasks_fwd, tasks_rev)
 
 
