@@ -57,7 +57,7 @@ ax_m = fig.add_axes([0.37, 0.10, 0.53, 0.80])
 ax_m.set_xlim(-0.5, N + 1.2)
 ax_m.set_ylim(-0.5, N * N - 0.5)
 ax_m.axis("off")
-fig.text(0.5, 0.91, "16×4 Encoding Matrix  (64 binary variables)",
+fig.text(0.635, 0.91, "16×4 Encoding Matrix  (64 binary variables)",
          ha="center", fontsize=11, fontweight="bold")
 
 # ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ for i in range(N):
 # Title + bottom legend
 # ---------------------------------------------------------------------------
 fig.suptitle("One-Hot Encoding: Each Sudoku Cell Becomes N Binary Variables",
-             fontsize=13, fontweight="bold", y=0.98)
+             fontsize=13, fontweight="bold", x=0.5, y=0.98)
 
 fig.legend(
     handles=[
