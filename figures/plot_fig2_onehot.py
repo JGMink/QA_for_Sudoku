@@ -147,7 +147,7 @@ fig.legend(
         mpatches.Patch(facecolor=FIXED_C, edgecolor="#888888",
                        label=f"Fixed = 1  ({n_fixed} vars, given = digit)"),
     ],
-    loc="lower center", bbox_to_anchor=(0.62, 0.0),
+    loc="lower center", bbox_to_anchor=(0.5, 0.0),
     fontsize=9, ncol=3, framealpha=0.9,
 )
 
