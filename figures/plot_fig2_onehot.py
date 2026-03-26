@@ -141,28 +141,19 @@ for k in range(N):
     ax_m.text(k, -0.5 - 0.5, f"d={k+1}",
               ha="center", va="top", fontsize=10, fontweight="bold")
 
-# Annotation notes below title (top of matrix area)
-ax_m.annotate(
-    "▲ (1,1) free cell — all 4 vars active",
-    xy=(1.5, N * N - 1),             # point at top of col 1-2, top row
-    xytext=(0.5, N * N + 0.55),
-    fontsize=8.5, color="#1A5276",
-    ha="center", va="bottom",
-    arrowprops=dict(arrowstyle="-", color="#1A5276", lw=1.0, alpha=0.6),
-    bbox=dict(boxstyle="round,pad=0.25", facecolor="#EBF5FB",
-              edgecolor="#1A5276", alpha=0.9, linewidth=0.8),
-)
-ax_m.annotate(
-    "▲ (1,2) given=2 — one locked, 3 killed",
-    xy=(1.5, N * N - 2),
-    xytext=(1.5, N * N + 1.25),
-    fontsize=8.5, color="#7D6608",
-    ha="center", va="bottom",
-    arrowprops=dict(arrowstyle="-", color="#7D6608", lw=1.0, alpha=0.6),
-    bbox=dict(boxstyle="round,pad=0.25", facecolor="#FEF9E7",
-              edgecolor="#7D6608", alpha=0.9, linewidth=0.8),
-)
-ax_m.set_ylim(-0.5, N * N + 2.0)   # make room above for the callouts
+ax_m.set_ylim(-3.2, N * N - 0.5)   # room below for callouts
+
+# Annotation notes — bottom left, below column labels
+ax_m.text(-0.5, -1.9,
+          "(1,1): free cell — all 4 variables active",
+          fontsize=8.5, color="#1A5276", va="center",
+          bbox=dict(boxstyle="round,pad=0.3", facecolor="#EBF5FB",
+                    edgecolor="#1A5276", alpha=0.9, linewidth=0.8))
+ax_m.text(-0.5, -2.8,
+          "(1,2): given=2 — one digit locked, three eliminated",
+          fontsize=8.5, color="#7D6608", va="center",
+          bbox=dict(boxstyle="round,pad=0.3", facecolor="#FEF9E7",
+                    edgecolor="#7D6608", alpha=0.9, linewidth=0.8))
 
 # ---------------------------------------------------------------------------
 # Connecting lines (puzzle cell → matrix row)
