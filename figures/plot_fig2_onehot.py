@@ -53,7 +53,7 @@ ax_p.set_aspect("equal")
 ax_p.axis("off")
 ax_p.set_title("4×4 Puzzle", fontsize=12, fontweight="bold", pad=10)
 
-ax_m = fig.add_axes([0.37, 0.10, 0.46, 0.80])
+ax_m = fig.add_axes([0.37, 0.10, 0.53, 0.80])
 ax_m.set_xlim(-0.5, N + 1.2)
 ax_m.set_ylim(-0.5, N * N - 0.5)
 ax_m.axis("off")
@@ -147,7 +147,7 @@ fig.legend(
         mpatches.Patch(facecolor=FIXED_C, edgecolor="#888888",
                        label=f"Fixed = 1  ({n_fixed} vars, given = digit)"),
     ],
-    loc="lower center", bbox_to_anchor=(0.5, 0.0),
+    loc="lower center", bbox_to_anchor=(0.58, 0.0),
     fontsize=9, ncol=3, framealpha=0.9,
 )
 
