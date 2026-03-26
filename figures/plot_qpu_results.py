@@ -54,8 +54,8 @@ fig, ax = plt.subplots(figsize=(10, 3.4))
 ax.axis("off")
 fig.patch.set_facecolor("white")
 
-col_labels = ["Difficulty", "Givens", "Free Vars", "Qubits", "SA Valid %",
-              "QPU Valid %", "QPU Std", "Chain Breaks"]
+col_labels = ["Difficulty", "Givens", "Free Vars", "Qubits",
+              "SA Opt %", "QPU Opt %", "QPU ±Std"]
 
 table_data = []
 for diff in DIFFS:
@@ -66,7 +66,6 @@ for diff in DIFFS:
     qpu_vals = [r["qpu_valid_pct"] for r in group]
     qpu_avg  = np.mean(qpu_vals)
     qpu_std  = np.std(qpu_vals)
-    cb_avg   = np.mean([r["chain_break_pct"] for r in group])
     table_data.append([
         diff.capitalize(),
         str(givens),
@@ -75,7 +74,6 @@ for diff in DIFFS:
         f"{sa_avg:.1f}%",
         f"{qpu_avg:.1f}%",
         f"±{qpu_std:.1f}%",
-        f"{cb_avg:.1f}%",
     ])
 
 tbl = ax.table(
@@ -175,7 +173,7 @@ ax.axhline(100, color="#444444", linewidth=0.8, linestyle="--", alpha=0.5)
 ax.set_xticks(x)
 ax.set_xticklabels([d.capitalize() for d in DIFFS], fontsize=13)
 ax.set_xlabel("Puzzle Difficulty", fontsize=12)
-ax.set_ylabel("Valid Solution Rate (%)", fontsize=12)
+ax.set_ylabel("Optimal Solution Rate (%)", fontsize=12)
 ax.set_ylim(0, 115)
 ax.set_yticks(range(0, 101, 20))
 ax.tick_params(axis="both", labelsize=11)
