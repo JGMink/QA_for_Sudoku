@@ -1,11 +1,6 @@
 """
 Recreate fig2_onehot_matrix.png — One-Hot Encoding visualization.
 
-Shows how a 4×4 Sudoku puzzle maps to a 16×4 binary encoding matrix,
-color-coded by variable status (free / eliminated / fixed=1).
-
-Uses hard_1 puzzle: 4 givens (2 @ r0c1, 3 @ r1c3, 2 @ r2c0, 4 @ r3c2)
-
 Run from repo root:
     python figures/plot_fig2_onehot.py
 """
@@ -13,7 +8,7 @@ Run from repo root:
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.patches import ConnectionPatch
 from pathlib import Path
 
 OUT = Path(__file__).parent / "fig2_onehot_matrix.png"
@@ -27,11 +22,8 @@ PUZZLE = np.array([
 ])
 N = 4
 
-# ---------------------------------------------------------------------------
-# Build encoding matrix  shape (16, 4)
-# Row i*N+j = cell (i,j), col k = digit k+1
-# Values: 0 = free, -1 = eliminated (given wrong digit), 1 = fixed
-# ---------------------------------------------------------------------------
+# Build encoding matrix (16 rows × 4 cols)
+# 0 = free, -1 = eliminated, 1 = fixed
 enc = np.zeros((N * N, N), dtype=int)
 for i in range(N):
     for j in range(N):
@@ -40,176 +32,160 @@ for i in range(N):
             for k in range(N):
                 enc[i * N + j, k] = 1 if k == g - 1 else -1
 
-# Colors
-FREE_C  = "#AED6F1"   # light blue
-ELIM_C  = "#D5D8DC"   # light gray
-FIXED_C = "#1A5276"   # dark blue
-BLANK_C = "white"
+FREE_C  = "#AED6F1"
+ELIM_C  = "#D5D8DC"
+FIXED_C = "#1A5276"
+GOLD_C  = "#F0B429"   # annotation highlight
 
-# ---------------------------------------------------------------------------
-# Layout: puzzle grid left, matrix right, connecting lines in between
-# ---------------------------------------------------------------------------
-fig = plt.figure(figsize=(13, 7))
-fig.patch.set_facecolor("white")
-
-ax_puzzle = fig.add_axes([0.02, 0.12, 0.28, 0.72])   # left: puzzle
-ax_matrix = fig.add_axes([0.42, 0.08, 0.42, 0.80])   # right: matrix
-
-# ── Puzzle grid ─────────────────────────────────────────────────────────────
-ax_puzzle.set_xlim(0, N)
-ax_puzzle.set_ylim(0, N)
-ax_puzzle.set_aspect("equal")
-ax_puzzle.axis("off")
-ax_puzzle.set_title("4×4 Puzzle", fontsize=12, fontweight="bold", pad=8)
-
-BOX_GIVEN = "#F9E79F"
-BOX_FREE  = "white"
-
-for i in range(N):
-    for j in range(N):
-        val  = PUZZLE[i, j]
-        row  = N - 1 - i          # flip so row 0 is at top
-        col  = j
-        color = BOX_GIVEN if val != 0 else BOX_FREE
-        rect = plt.Rectangle([col, row], 1, 1,
-                              facecolor=color, edgecolor="#888888", linewidth=1.2)
-        ax_puzzle.add_patch(rect)
-        if val != 0:
-            ax_puzzle.text(col + 0.5, row + 0.5, str(val),
-                           ha="center", va="center",
-                           fontsize=18, fontweight="bold", color="#333333")
-        else:
-            ax_puzzle.text(col + 0.5, row + 0.5, "?",
-                           ha="center", va="center",
-                           fontsize=12, color="#aaaaaa")
-
-# Box borders (2×2 boxes)
-for br in range(2):
-    for bc in range(2):
-        rect = plt.Rectangle([bc * 2, br * 2], 2, 2,
-                              fill=False, edgecolor="#333333", linewidth=2.2)
-        ax_puzzle.add_patch(rect)
-
-# Legend for puzzle
-given_patch = mpatches.Patch(facecolor=BOX_GIVEN, edgecolor="#888888", label="Given clue")
-free_patch  = mpatches.Patch(facecolor=BOX_FREE,  edgecolor="#888888", label="Free cell")
-ax_puzzle.legend(handles=[given_patch, free_patch],
-                 loc="lower center", bbox_to_anchor=(0.5, -0.12),
-                 fontsize=9, framealpha=0.9, ncol=2)
-
-# ── Encoding matrix ─────────────────────────────────────────────────────────
-ax_matrix.set_xlim(-0.5, N - 0.5)
-ax_matrix.set_ylim(-0.5, N * N - 0.5)
-ax_matrix.set_aspect("equal")
-ax_matrix.axis("off")
-ax_matrix.set_title(
-    f"16×4 Encoding Matrix  ({N*N} binary variables per digit = {N*N*N} total,  "
-    f"{int(np.sum(enc == 0))} free)",
-    fontsize=11, fontweight="bold", pad=10,
-)
-
-for row_idx in range(N * N):
-    cell_row = row_idx // N   # 0-indexed puzzle row
-    cell_col = row_idx % N    # 0-indexed puzzle col
-    mat_y    = N * N - 1 - row_idx   # flip so (1,1) at top
-
-    for k in range(N):
-        v = enc[row_idx, k]
-        if v == 0:
-            color = FREE_C
-        elif v == -1:
-            color = ELIM_C
-        else:
-            color = FIXED_C
-
-        rect = plt.Rectangle([k - 0.5, mat_y - 0.5], 1, 1,
-                              facecolor=color, edgecolor="white", linewidth=0.8)
-        ax_matrix.add_patch(rect)
-
-    # Row label (right side) — (row, col) 1-indexed
-    ax_matrix.text(N - 0.5 + 0.55, mat_y,
-                   f"({cell_row+1},{cell_col+1})",
-                   ha="left", va="center", fontsize=8, color="#444444")
-
-# Column labels (bottom)
-for k in range(N):
-    ax_matrix.text(k, -0.5 - 0.4, f"d={k+1}",
-                   ha="center", va="top", fontsize=10, fontweight="bold")
-
-# Annotations with arrows pointing to specific rows
-# Row (1,2): given=2 — top given row in matrix (row_idx=1 → mat_y = N²-2 = 14)
-given_row_y = N * N - 1 - 1   # (1,2) is row_idx=1
-
-ax_matrix.annotate(
-    "given=2:\none locked, 3 killed",
-    xy=(N - 0.5, given_row_y),
-    xytext=(N + 1.6, given_row_y + 2.5),
-    fontsize=8.5, color="#7D6608",
-    ha="left", va="center",
-    arrowprops=dict(arrowstyle="->", color="#7D6608", lw=1.2),
-    bbox=dict(boxstyle="round,pad=0.3", facecolor="#FEF9E7",
-              edgecolor="#7D6608", alpha=0.9),
-)
-
-# Row (1,1): free — row_idx=0 → mat_y = N²-1 = 15
-free_row_y = N * N - 1 - 0
-
-ax_matrix.annotate(
-    "free:\nall 4 vars active",
-    xy=(N - 0.5, free_row_y),
-    xytext=(N + 1.6, free_row_y + 1.2),
-    fontsize=8.5, color="#1A5276",
-    ha="left", va="center",
-    arrowprops=dict(arrowstyle="->", color="#1A5276", lw=1.2),
-    bbox=dict(boxstyle="round,pad=0.3", facecolor="#EBF5FB",
-              edgecolor="#1A5276", alpha=0.9),
-)
-
-# ── Bottom legend for matrix ─────────────────────────────────────────────────
 n_free  = int(np.sum(enc == 0))
 n_elim  = int(np.sum(enc == -1))
 n_fixed = int(np.sum(enc == 1))
 
-patches = [
-    mpatches.Patch(facecolor=FREE_C,  edgecolor="#888888",
-                   label=f"Free variable  ({n_free} vars)"),
-    mpatches.Patch(facecolor=ELIM_C,  edgecolor="#888888",
-                   label=f"Eliminated  ({n_elim} vars, given ≠ digit)"),
-    mpatches.Patch(facecolor=FIXED_C, edgecolor="#888888",
-                   label=f"Fixed = 1  ({n_fixed} vars, given = digit)"),
-]
-fig.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.62, 0.0),
-           fontsize=9, ncol=3, framealpha=0.9)
+# ---------------------------------------------------------------------------
+# Figure layout
+# ---------------------------------------------------------------------------
+fig = plt.figure(figsize=(14, 6.5))
+fig.patch.set_facecolor("white")
 
-# ── Connecting lines (puzzle cell → matrix row) ───────────────────────────────
-# Map puzzle axes → figure coords via transforms
+# Puzzle axes (left) — square cells
+ax_p = fig.add_axes([0.04, 0.12, 0.26, 0.76])
+ax_p.set_xlim(0, N)
+ax_p.set_ylim(0, N)
+ax_p.set_aspect("equal")
+ax_p.axis("off")
+ax_p.set_title("4×4 Puzzle", fontsize=12, fontweight="bold", pad=10)
+
+# Matrix axes (right) — wider than tall cells, with extra x room for labels
+ax_m = fig.add_axes([0.37, 0.10, 0.55, 0.80])
+# xlim: cols 0-3 plus space for row labels
+ax_m.set_xlim(-0.5, N + 2.8)
+ax_m.set_ylim(-0.5, N * N - 0.5)
+ax_m.axis("off")
+ax_m.set_title(
+    f"16×4 Encoding Matrix  (64 binary variables)",
+    fontsize=11, fontweight="bold", pad=10,
+)
+
+# ---------------------------------------------------------------------------
+# Draw puzzle grid
+# ---------------------------------------------------------------------------
+for i in range(N):
+    for j in range(N):
+        val = PUZZLE[i, j]
+        ry  = N - 1 - i
+        fc  = "#F9E79F" if val != 0 else "white"
+        ax_p.add_patch(plt.Rectangle([j, ry], 1, 1,
+                       facecolor=fc, edgecolor="#888888", linewidth=1.2))
+        if val != 0:
+            ax_p.text(j + 0.5, ry + 0.5, str(val),
+                      ha="center", va="center", fontsize=18,
+                      fontweight="bold", color="#333333")
+        else:
+            ax_p.text(j + 0.5, ry + 0.5, "?",
+                      ha="center", va="center", fontsize=12, color="#aaaaaa")
+
+# 2×2 box borders
+for br in range(2):
+    for bc in range(2):
+        ax_p.add_patch(plt.Rectangle([bc * 2, br * 2], 2, 2,
+                       fill=False, edgecolor="#333333", linewidth=2.2))
+
+# Puzzle legend
+ax_p.legend(
+    handles=[
+        mpatches.Patch(facecolor="#F9E79F", edgecolor="#888888", label="Given clue"),
+        mpatches.Patch(facecolor="white",   edgecolor="#888888", label="Free cell"),
+    ],
+    loc="lower center", bbox_to_anchor=(0.5, -0.13),
+    fontsize=9, ncol=2, framealpha=0.9,
+)
+
+# ---------------------------------------------------------------------------
+# Draw encoding matrix
+# ---------------------------------------------------------------------------
+ANNOTATE_ROWS = {
+    0: ("free: all 4 vars active",      FREE_C,  "#1A5276"),   # (1,1) — top
+    1: ("given=2: one locked, 3 killed", GOLD_C,  "#7D6608"),   # (1,2)
+}
+
+for row_idx in range(N * N):
+    mat_y = N * N - 1 - row_idx
+
+    # Annotation row: highlight full row behind the cells
+    if row_idx in ANNOTATE_ROWS:
+        _, hi_col, _ = ANNOTATE_ROWS[row_idx]
+        ax_m.add_patch(plt.Rectangle(
+            [-0.5, mat_y - 0.5], N, 1,
+            facecolor=hi_col, alpha=0.35, zorder=0,
+        ))
+
+    # Draw each cell
+    for k in range(N):
+        v  = enc[row_idx, k]
+        fc = FREE_C if v == 0 else (FIXED_C if v == 1 else ELIM_C)
+        ax_m.add_patch(plt.Rectangle(
+            [k - 0.5, mat_y - 0.5], 1, 1,
+            facecolor=fc, edgecolor="white", linewidth=0.8, zorder=1,
+        ))
+
+    # Row label — (row+1, col+1) in 1-indexed
+    cell_r = row_idx // N
+    cell_c = row_idx % N
+    ax_m.text(N - 0.5 + 0.25, mat_y,
+              f"({cell_r+1},{cell_c+1})",
+              ha="left", va="center", fontsize=8.5, color="#444444")
+
+    # Annotation text for highlighted rows
+    if row_idx in ANNOTATE_ROWS:
+        label, _, txt_col = ANNOTATE_ROWS[row_idx]
+        ax_m.text(N - 0.5 + 1.35, mat_y,
+                  label, ha="left", va="center",
+                  fontsize=8.5, color=txt_col, fontweight="bold",
+                  bbox=dict(boxstyle="round,pad=0.25",
+                            facecolor="white", edgecolor=txt_col,
+                            alpha=0.9, linewidth=1.0))
+
+# Column labels (bottom)
+for k in range(N):
+    ax_m.text(k, -0.5 - 0.5, f"d={k+1}",
+              ha="center", va="top", fontsize=10, fontweight="bold")
+
+# ---------------------------------------------------------------------------
+# Connecting lines (puzzle cell → matrix row)
+# ---------------------------------------------------------------------------
 for i in range(N):
     for j in range(N):
         row_idx = i * N + j
         mat_y   = N * N - 1 - row_idx
+        puz_y   = N - 1 - i + 0.5   # cell center in puzzle axes
 
-        # Puzzle cell center in axes coords
-        puz_x = j + 0.5
-        puz_y = (N - 1 - i) + 0.5
-
-        # Convert to figure coords
-        puz_disp  = ax_puzzle.transData.transform((puz_x, puz_y))
-        puz_fig   = fig.transFigure.inverted().transform(puz_disp)
-
-        mat_disp  = ax_matrix.transData.transform((-0.5, mat_y))
-        mat_fig   = fig.transFigure.inverted().transform(mat_disp)
-
-        line = plt.Line2D(
-            [puz_fig[0], mat_fig[0]],
-            [puz_fig[1], mat_fig[1]],
-            transform=fig.transFigure,
-            color="#AAAAAA", linewidth=0.5, alpha=0.5,
+        cp = ConnectionPatch(
+            xyA=(j + 1.0, puz_y),          # right edge of puzzle cell
+            xyB=(-0.5,    mat_y),           # left edge of matrix row
+            coordsA="data", coordsB="data",
+            axesA=ax_p, axesB=ax_m,
+            color="#BBBBBB", linewidth=0.5, alpha=0.6,
         )
-        fig.add_artist(line)
+        fig.add_artist(cp)
 
-# ── Overall title ─────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Overall title + bottom legend
+# ---------------------------------------------------------------------------
 fig.suptitle("One-Hot Encoding: Each Sudoku Cell Becomes N Binary Variables",
-             fontsize=13, fontweight="bold", y=0.97)
+             fontsize=13, fontweight="bold", y=0.98)
+
+fig.legend(
+    handles=[
+        mpatches.Patch(facecolor=FREE_C,  edgecolor="#888888",
+                       label=f"Free variable  ({n_free} vars)"),
+        mpatches.Patch(facecolor=ELIM_C,  edgecolor="#888888",
+                       label=f"Eliminated  ({n_elim} vars, given ≠ digit)"),
+        mpatches.Patch(facecolor=FIXED_C, edgecolor="#888888",
+                       label=f"Fixed = 1  ({n_fixed} vars, given = digit)"),
+    ],
+    loc="lower center", bbox_to_anchor=(0.62, 0.0),
+    fontsize=9, ncol=3, framealpha=0.9,
+)
 
 plt.savefig(OUT, dpi=150, bbox_inches="tight", facecolor="white")
 plt.close()
