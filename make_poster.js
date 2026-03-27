@@ -55,15 +55,25 @@ function sectionHeader(slide, label, x, y, w, color = C.blue) {
   });
 }
 
-function fig(slide, imgPath, x, y, cardW, cardH, pad = 0.12) {
-  // Place image inside (x+pad, y+0.75) with contain sizing
+function fig(slide, imgPath, x, y, cardW, cardH, imgRatio, pad = 0.12) {
+  // Compute exact display dimensions to preserve aspect ratio (no stretching)
   const dispW = cardW - 2 * pad;
   const dispH = cardH - 0.75 - pad - 0.1;
-  slide.addImage({
-    path: imgPath,
-    x: x + pad, y: y + 0.75,
-    sizing: { type: "contain", w: dispW, h: dispH },
-  });
+  const boxRatio = dispW / dispH;
+  let actualW, actualH;
+  if (imgRatio >= boxRatio) {
+    // image wider than box → constrain to full width
+    actualW = dispW;
+    actualH = dispW / imgRatio;
+  } else {
+    // image taller than box → constrain to full height
+    actualH = dispH;
+    actualW = dispH * imgRatio;
+  }
+  // Center within the display area
+  const imgX = x + pad + (dispW - actualW) / 2;
+  const imgY = y + 0.75 + (dispH - actualH) / 2;
+  slide.addImage({ path: imgPath, x: imgX, y: imgY, w: actualW, h: actualH });
 }
 
 // ─── Build Slide ─────────────────────────────────────────────────────────────
@@ -142,7 +152,9 @@ slide.addText([
   { text: "\nWhy Quantum Annealing?\n",           options: { bold: true,  fontSize: 25, breakLine: true } },
   { text: "Classical solvers (backtracking, constraint propagation, dancing links) solve 9\u00D79 in milliseconds but scale poorly as constraints densify. Quantum annealing leverages quantum tunneling to escape local energy minima \u2014 ideal for constraint-heavy landscapes where classical methods get trapped.\n", options: { fontSize: 23, breakLine: true } },
   { text: "\nGoal\n",                             options: { bold: true,  fontSize: 25, breakLine: true } },
-  { text: "Derive a QUBO formulation for Sudoku from first principles, validate correctness via simulated annealing, then test on D-Wave\u2019s Leap Hybrid BQM Solver and Advantage2 QPU. Benchmark scalability from 4\u00D74 to 9\u00D79, comparing quantum and classical methods on success rate and energy.", options: { fontSize: 23 } },
+  { text: "Derive a QUBO formulation for Sudoku from first principles, validate correctness via simulated annealing, then test on D-Wave\u2019s Leap Hybrid BQM Solver and Advantage2 QPU. Benchmark scalability from 4\u00D74 to 9\u00D79, comparing quantum and classical methods on success rate and energy.\n", options: { fontSize: 23, breakLine: true } },
+  { text: "\nHardware Platform\n",                options: { bold: true,  fontSize: 25, breakLine: true } },
+  { text: "D-Wave Advantage2: 5,000+ superconducting qubits on Pegasus P16 topology. QUBO variables are mapped to physical qubits via minor embedding, with coupled qubit chains representing binary decisions. QPU experiments use 1,000 reads at 200\u00A0\u03BCs anneal time with forward annealing.", options: { fontSize: 23 } },
 ], { x: cx1+0.2, y: intro_y+0.72, w: COL_W-0.35, h: intro_h-0.82,
      align:"left", valign:"top", wrap:true, autoFit:false });
 
@@ -195,22 +207,35 @@ constraints.forEach((c, i) => {
   ], { x: cx1+3.1, y: cy, w: COL_W-3.32, h: 1.32, align:"left", valign:"middle", margin:0, wrap:true });
 });
 
-slide.addText("Lagrange multipliers: \u03BB\u2081=\u03BB\u2082=\u03BB\u2083=\u03BB\u2084=1.0  \u00B7  Diagonal: \u22121  \u00B7  Off-diagonal: +2  \u00B7  QUBO sparsity: 90.6% zeros", {
-  x: cx1+0.2, y: form_y+11.0, w: COL_W-0.4, h: 0.35,
+// QUBO matrix properties summary (fills gap below constraint rows)
+slide.addShape(pres.shapes.RECTANGLE, { x: cx1+0.2, y: form_y+9.55, w: COL_W-0.4, h: 1.22,
+  fill:{color:C.navy}, line:{color:C.cyan,width:2} });
+slide.addText([
+  { text: "Matrix entries: ", options: { bold:true, fontSize:21, color:C.cyan } },
+  { text: "diagonal \u22121 \u00B7 off-diagonal (conflicting vars) +2 \u00B7 ", options: { fontSize:21, color:C.white } },
+  { text: "4\u00D74:", options: { bold:true, fontSize:21, color:C.cyan } },
+  { text: " 64\u00D764 Q \u00B7 ", options: { fontSize:21, color:C.white } },
+  { text: "9\u00D79:", options: { bold:true, fontSize:21, color:C.cyan } },
+  { text: " 459\u00D7459 Q (30 givens eliminated) \u00B7 90.6% sparse", options: { fontSize:21, color:C.white } },
+], { x: cx1+0.35, y: form_y+9.55, w: COL_W-0.6, h: 1.22,
+  align:"left", valign:"middle", wrap:true, margin:0 });
+slide.addText("\u03BB\u2081=\u03BB\u2082=\u03BB\u2083=\u03BB\u2084=1.0  (Lagrange multipliers, all equal \u2014 penalty weight tuning is a future direction)", {
+  x: cx1+0.2, y: form_y+10.85, w: COL_W-0.4, h: 0.38,
   fontSize:18, italic:true, color:C.slate, align:"left", valign:"middle", margin:0 });
 
-// ── 1c. One-Hot Encoding figure (fig2, ratio 1.881) ───────────────────────────
-// At 13" wide: display h = (13-0.24)/1.881 = 6.79"  card h = 6.79+0.75+0.12+0.1 = 7.76 → 8.0"
+// ── 1c. One-Hot Encoding figure (fig2, ratio 1.7565 after right-whitespace crop) ─
+// At 13" wide: height-limited → actualH=7.03", actualW=7.03×1.7565=12.35"
 const fig2_y = form_y + form_h + GUTTER_V, fig2_h = AVAIL - intro_h - form_h - 2*GUTTER_V;  // = 8.0"
 card(slide, pres, cx1, fig2_y, COL_W, fig2_h, "FFFFFF");
 sectionHeader(slide, "One-Hot Encoding", cx1, fig2_y, COL_W);
-fig(slide, "figures/vectorized/fig2_onehot_matrix_hires-1.png", cx1, fig2_y, COL_W, fig2_h);
+fig(slide, "figures/vectorized/fig2_cropped.png", cx1, fig2_y, COL_W, fig2_h, 1.7565);
 
 // ════════════════════════════════════════════════════════════════════════════
-// COLUMN 2 — Methodology · QUBO Matrix (fig4) · Variable Reduction (fig3)
-// col2 heights: meth=7.0  fig4=12.7  fig3=9.55  gutters=2×0.2  total=29.65 ✓
-// fig4 (1.075:1) at 13" wide → display h = 12.7/1.075 = 11.8" ✓
-// fig3 (1.054:1) at 13" wide → display h = 8.8/1.054 = 8.35" wide → 8.35" within 13" ✓
+// COLUMN 2 — Methodology · Test Puzzles (fig1, 2×9×9) · Results Table (fig5) · Variable Reduction (fig3)
+// col2 heights: meth=7.0  fig1=9.0  fig5=5.5  fig3=7.55  gutters=3×0.2  total=29.65 ✓
+// fig1 (1.679:1, two 9×9 puzzles) → width-limited → actualW=12.76", actualH=7.60" ✓
+// fig5 (2.955:1 after crop) → width-limited → actualW=12.76", actualH=4.32" in 4.53" area ✓
+// fig3 (1.255:1 after crop) → height-limited → actualH=6.58", actualW=8.26" ✓
 // ════════════════════════════════════════════════════════════════════════════
 const cx2 = COL_X[1];
 
@@ -232,49 +257,49 @@ slide.addText([
   { text: "\u2022 D-Wave Advantage2 QPU\n  1,000 reads \u00B7 200 \u00B5s \u00B7 forward annealing\n", options: { fontSize:21, breakLine:true } },
   { text: "\u2022 QAOA (Qiskit) \u2014 2\u00D72 only\n  p=2, 2048 shots, COBYLA\n\n", options: { fontSize:21, breakLine:true } },
   { text: "Test Cases\n", options: { bold:true, fontSize:24, breakLine:true } },
-  { text: "\u2022 4\u00D74 blank (64 vars) \u2014 correctness baseline\n", options: { fontSize:21, breakLine:true } },
-  { text: "\u2022 9\u00D79 Easy   30 givens \u2192 459 vars\n", options: { fontSize:21, breakLine:true } },
-  { text: "\u2022 9\u00D79 Medium  25 givens \u2192 504 vars\n", options: { fontSize:21, breakLine:true } },
-  { text: "\u2022 9\u00D79 Hard    17 givens \u2192 576 vars", options: { fontSize:21 } },
+  { text: "\u2022 4\u00D74 blank \u2014 64 vars\n", options: { fontSize:21, breakLine:true } },
+  { text: "\u2022 9\u00D79 Easy \u2014 30 givens, 459 vars\n", options: { fontSize:21, breakLine:true } },
+  { text: "\u2022 9\u00D79 Medium \u2014 25 givens, 504 vars\n", options: { fontSize:21, breakLine:true } },
+  { text: "\u2022 9\u00D79 Hard \u2014 17 givens, 576 vars", options: { fontSize:21 } },
 ], { x: cx2+0.2, y: meth_y+0.72, w: 7.3, h: meth_h-0.85,
      align:"left", valign:"top", wrap:true, autoFit:false });
 
-// ── 2b. QUBO Matrix figure (fig4, ratio 1.075) ────────────────────────────────
-// Optimal height: (13-0.24)/1.075 + 0.75+0.24 = 11.87+0.99 = 12.86 → use 12.7"
-const fig4_y = meth_y + meth_h + GUTTER_V, fig4_h = 12.7;
-card(slide, pres, cx2, fig4_y, COL_W, fig4_h, "FFFFFF");
-sectionHeader(slide, "QUBO Coefficient Matrix (4\u00D74 Sudoku, 64\u00D764)", cx2, fig4_y, COL_W);
-fig(slide, "figures/vectorized/fig4_qubo_matrix_hires-1.png", cx2, fig4_y, COL_W, fig4_h);
+// ── 2b. Test Puzzles figure (fig1, two 9×9 puzzles, ratio 1.6788) ─────────────
+// Width-limited at 9" card: actualW=12.76", actualH=7.60" — each puzzle ~6.4" wide
+const fig1_y = meth_y + meth_h + GUTTER_V, fig1_h = 9.0;
+card(slide, pres, cx2, fig1_y, COL_W, fig1_h, "FFFFFF");
+sectionHeader(slide, "Sudoku Test Puzzles (9\u00D79 Easy & Hard)", cx2, fig1_y, COL_W);
+fig(slide, "figures/vectorized/fig1_2puzzles.png", cx2, fig1_y, COL_W, fig1_h, 1.6788);
 
-// ── 2c. Variable Reduction figure (fig3, ratio 1.054) ─────────────────────────
-const fig3_y = fig4_y + fig4_h + GUTTER_V;
-const fig3_h = AVAIL - meth_h - fig4_h - 2*GUTTER_V;   // = 9.55"
+// ── 2c. Results table figure (fig5, ratio 2.9554 after bottom whitespace crop) ─
+// Crossover card height = 4.32+0.97 = 5.29"; at 5.5" card → width-limited, actualH=4.32"
+const fig5_y = fig1_y + fig1_h + GUTTER_V, fig5_h = 5.5;
+card(slide, pres, cx2, fig5_y, COL_W, fig5_h, "FFFFFF");
+sectionHeader(slide, "Results: D-Wave QPU vs. Simulated Annealing", cx2, fig5_y, COL_W);
+fig(slide, "figures/vectorized/fig5_cropped.png", cx2, fig5_y, COL_W, fig5_h, 2.9554);
+
+// ── 2d. Variable Reduction figure (fig3, ratio 1.2553 after top/bottom crop) ──
+const fig3_y = fig5_y + fig5_h + GUTTER_V;
+const fig3_h = AVAIL - meth_h - fig1_h - fig5_h - 3*GUTTER_V;  // = 7.55"
 card(slide, pres, cx2, fig3_y, COL_W, fig3_h, "FFFFFF");
 sectionHeader(slide, "Variable Reduction via Given-Cell Elimination", cx2, fig3_y, COL_W);
-fig(slide, "figures/vectorized/fig3_compression_hires-1.png", cx2, fig3_y, COL_W, fig3_h);
+fig(slide, "figures/vectorized/fig3_cropped.png", cx2, fig3_y, COL_W, fig3_h, 1.2553);
 
 // ════════════════════════════════════════════════════════════════════════════
-// COLUMN 3 — Test Puzzles (fig1) · Results Table (fig5) · Observations · Conclusions
-// col3 heights: fig1=7.0  fig5=6.0  obs=7.0  conc=9.45  gutters=3×0.2  total=29.65 ✓
-// fig1 (2.191:1) at 13": display h = 12.7/2.191 = 5.80" in 6.15" area ✓
-// fig5 (2.387:1) at 13": display h = 12.7/2.387 = 5.32" in 5.15" area → height-limited; width = 5.15×2.387=12.3" ✓
+// COLUMN 3 — QUBO Matrix (fig4) · Key Observations · Conclusions · Future Work
+// col3 heights: fig4=12.7  obs=6.5  conc=4.5  future=5.35  gutters=3×0.2  total=29.65 ✓
+// fig4 (1.075:1) at 13" → height-limited → actualH=11.73", actualW=12.61" ✓
 // ════════════════════════════════════════════════════════════════════════════
 const cx3 = COL_X[2];
 
-// ── 3a. Test Puzzles figure (fig1, ratio 2.191) ───────────────────────────────
-const fig1_y = BODY_Y, fig1_h = 7.0;
-card(slide, pres, cx3, fig1_y, COL_W, fig1_h, "FFFFFF");
-sectionHeader(slide, "Sudoku Test Puzzles", cx3, fig1_y, COL_W);
-fig(slide, "figures/vectorized/fig1_sudoku_puzzles_hires-1.png", cx3, fig1_y, COL_W, fig1_h);
+// ── 3a. QUBO Coefficient Matrix figure (fig4, ratio 1.075) ───────────────────
+const fig4_y = BODY_Y, fig4_h = 12.0;
+card(slide, pres, cx3, fig4_y, COL_W, fig4_h, "FFFFFF");
+sectionHeader(slide, "QUBO Coefficient Matrix (4\u00D74 Sudoku, 64\u00D764)", cx3, fig4_y, COL_W);
+fig(slide, "figures/vectorized/fig4_qubo_matrix_hires-1.png", cx3, fig4_y, COL_W, fig4_h, 1.075);
 
-// ── 3b. Results table figure (fig5, ratio 2.387) ─────────────────────────────
-const fig5_y = fig1_y + fig1_h + GUTTER_V, fig5_h = 6.0;
-card(slide, pres, cx3, fig5_y, COL_W, fig5_h, "FFFFFF");
-sectionHeader(slide, "Results: D-Wave QPU vs. Simulated Annealing", cx3, fig5_y, COL_W);
-fig(slide, "figures/vectorized/fig5_comparison_table_hires-1.png", cx3, fig5_y, COL_W, fig5_h);
-
-// ── 3c. Key Observations ─────────────────────────────────────────────────────
-const obs_y = fig5_y + fig5_h + GUTTER_V, obs_h = 7.0;
+// ── 3b. Key Observations ─────────────────────────────────────────────────────
+const obs_y = fig4_y + fig4_h + GUTTER_V, obs_h = 6.5;
 card(slide, pres, cx3, obs_y, COL_W, obs_h);
 sectionHeader(slide, "Key Observations", cx3, obs_y, COL_W, C.slate);
 
@@ -286,30 +311,38 @@ const obsItems = [
   { icon: "\u23F1", color: C.slate,   text: "Hybrid averaged 1.72s vs. SA\u2019s 1.96s \u2014 no quantum overhead penalty at this scale." },
 ];
 obsItems.forEach((o, i) => {
-  const oy = obs_y + 0.78 + i * 1.24;
-  slide.addText(o.icon, { x: cx3+0.22, y: oy, w: 0.55, h: 1.1,
-    fontSize:28, color:o.color, align:"center", valign:"middle", margin:0 });
-  slide.addText(o.text, { x: cx3+0.82, y: oy, w: COL_W-1.05, h: 1.1,
-    fontSize:21, color:C.bodyText, align:"left", valign:"middle", wrap:true, margin:0 });
+  const oy = obs_y + 0.72 + i * 1.1;
+  slide.addText(o.icon, { x: cx3+0.22, y: oy, w: 0.55, h: 0.95,
+    fontSize:26, color:o.color, align:"center", valign:"middle", margin:0 });
+  slide.addText(o.text, { x: cx3+0.82, y: oy, w: COL_W-1.05, h: 0.95,
+    fontSize:20, color:C.bodyText, align:"left", valign:"middle", wrap:true, margin:0 });
 });
 
-// ── 3d. Conclusions & Future Work ─────────────────────────────────────────────
-const conc_y = obs_y + obs_h + GUTTER_V;
-const conc_h = AVAIL - fig1_h - fig5_h - obs_h - 3*GUTTER_V;  // = 9.45"
+// ── 3c. Conclusions ───────────────────────────────────────────────────────────
+const conc_y = obs_y + obs_h + GUTTER_V, conc_h = 6.2;
 card(slide, pres, cx3, conc_y, COL_W, conc_h, C.lightBlueBg);
-sectionHeader(slide, "Conclusions & Future Work", cx3, conc_y, COL_W, C.navy);
+sectionHeader(slide, "Conclusions", cx3, conc_y, COL_W, C.navy);
 slide.addText([
   { text: "\u2022 QUBO correctly encodes all four Sudoku constraints; E\u00A0=\u00A00 guarantees a valid solution.\n", options: { fontSize:22, breakLine:true } },
   { text: "\u2022 D-Wave Hybrid BQM Solver solved 2/3 test puzzles vs. SA\u2019s 1/3 \u2014 practical quantum advantage demonstrated.\n", options: { fontSize:22, breakLine:true } },
-  { text: "\u2022 Advantage2 QPU matches SA on easy instances; embedding limits emerge on harder ones.\n", options: { fontSize:22, breakLine:true } },
-  { text: "\u2022 Given-cell elimination is essential: 37% variable reduction (729\u2192459 vars) on 9\u00D79 Easy.\n", options: { fontSize:22, breakLine:true } },
-  { text: "\u2022 Execution times are competitive: hybrid 1.72s vs. SA 1.96s \u2014 quantum overhead is not a barrier.\n\n", options: { fontSize:22, breakLine:true } },
-  { text: "Future Directions\n", options: { bold:true, fontSize:24, breakLine:true } },
+  { text: "\u2022 Advantage2 QPU matches SA on easy instances; embedding complexity limits harder ones.\n", options: { fontSize:22, breakLine:true } },
+  { text: "\u2022 Given-cell elimination reduces 9\u00D79 variables by 37% (729\u2192459 free vars) \u2014 essential for feasible embedding.\n", options: { fontSize:22, breakLine:true } },
+  { text: "\u2022 Execution times competitive: hybrid 1.72s vs. SA 1.96s \u2014 quantum overhead is not a barrier.", options: { fontSize:22 } },
+], { x: cx3+0.2, y: conc_y+0.72, w: COL_W-0.35, h: conc_h-0.82,
+     align:"left", valign:"top", wrap:true, autoFit:false });
+
+// ── 3d. Future Work ───────────────────────────────────────────────────────────
+const future_y = conc_y + conc_h + GUTTER_V;
+const future_h = AVAIL - fig4_h - obs_h - conc_h - 3*GUTTER_V;  // = 5.35"
+card(slide, pres, cx3, future_y, COL_W, future_h, C.lightBlueBg);
+sectionHeader(slide, "Future Directions", cx3, future_y, COL_W, C.navy);
+slide.addText([
   { text: "\u2022 Penalty weight optimization per constraint type (\u03BB\u2081\u2026\u03BB\u2084 tuning)\n", options: { fontSize:22, breakLine:true } },
-  { text: "\u2022 Domain-wall encoding to further reduce variable count\n", options: { fontSize:22, breakLine:true } },
+  { text: "\u2022 Domain-wall encoding to further reduce variable count below one-hot\n", options: { fontSize:22, breakLine:true } },
   { text: "\u2022 Direct Advantage QPU access for full 9\u00D79 benchmarks\n", options: { fontSize:22, breakLine:true } },
-  { text: "\u2022 Systematic benchmarking across full puzzle difficulty distributions", options: { fontSize:22 } },
-], { x: cx3+0.2, y: conc_y+0.78, w: COL_W-0.35, h: conc_h-0.88,
+  { text: "\u2022 Systematic benchmarking across full puzzle difficulty distributions\n", options: { fontSize:22, breakLine:true } },
+  { text: "\u2022 Hybrid decomposition strategies for larger grid sizes (16\u00D716 and beyond)", options: { fontSize:22 } },
+], { x: cx3+0.2, y: future_y+0.72, w: COL_W-0.35, h: future_h-0.82,
      align:"left", valign:"top", wrap:true, autoFit:false });
 
 // ════════════════════════════════════════════════════════════════════════════
