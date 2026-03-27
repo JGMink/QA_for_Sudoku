@@ -229,6 +229,15 @@ ipython_config.py
 # https://jupyterlab-lsp.readthedocs.io/en/2.x/Configuring.html#virtual_documents_dir
 .virtual_documents/
 
+# LibreOffice lock files
+.~lock.*#
+
+# Unpacked PPTX working directory
+unpacked/
+
+# Claude Code session data
+.claude/
+
 # QPU experiment outputs (large generated files)
 qpu_experiments/embeddings_sudoku/
 qpu_experiments/results_sudoku_forward/
